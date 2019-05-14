@@ -1,0 +1,73 @@
+apiVersion: apps/v1beta1
+kind: Deployment  
+metadata:  
+  name: test
+spec:  
+  replicas: 1  
+  strategy:  
+    type: RollingUpdate  
+    rollingUpdate:  
+      maxSurge: 25%  
+      maxUnavailable: 0  
+  template:  
+    metadata:  
+      labels:  
+        app: test  
+    spec:
+      imagePullSecrets:
+      - name: reg-ip-99
+      containers:  
+      - name: test
+        image: xxx.cn/base/test:v1.0514 
+        imagePullPolicy: Always  
+        ports:  
+        - containerPort: 8080  
+          name: web  
+          protocol: TCP  
+        resources:
+          limits:
+            cpu: 800m
+            memory: 1000Mi
+          requests:
+             cpu: 500m
+             memory: 500Mi
+        volumeMounts:  
+        - name: test
+          mountPath: /var/www/html
+      volumes:  
+      - name: test
+        nfs:  
+          server: xxxxx.myhuaweicloud.com
+          path: "/share-d97b3e7f/test"
+
+
+---
+kind: Service  
+apiVersion: v1  
+metadata:  
+  labels:  
+      app: test  
+  name: test
+spec:  
+  ports:  
+  - port: 80
+    targetPort: 8080  
+    name: web  
+  selector:
+    app: test
+    
+    
+---
+apiVersion: extensions/v1beta1  
+kind: Ingress  
+metadata:  
+  name: test
+spec:  
+  rules:  
+  - host: xx.xx.com
+    http:  
+      paths:  
+      - path: /  
+        backend:  
+          serviceName: test 
+          servicePort: 80
